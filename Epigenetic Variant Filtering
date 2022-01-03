@@ -1,7 +1,7 @@
 #####Add filter: select for epigenetic variants
 
 #Import file of filtered variants (see Initial Filtering file)
-PatientFiltCombined <- read_csv("PatientCombined.csv",
+PatientCombined <- read_csv("PatientCombined.csv",
                                 col_names = TRUE,
                                 na = "NaN")
                                 

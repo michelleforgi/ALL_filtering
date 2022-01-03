@@ -1,0 +1,18 @@
+#####Add filter: select for epigenetic variants
+
+#Import file of filtered variants (see Initial Filtering file)
+PatientFiltCombined <- read_csv("PatientCombined.csv",
+                                col_names = TRUE,
+                                na = "NaN")
+                                
+ #Import list of epigenetic genes from Huether et al. 
+library(readxl)
+EpiVar <- read_excel("Gene list filters/EpiList.xls",
+                     col_names = TRUE, 
+                     na = "NaN")
+
+EpiVar <- pull(EpiVar, Gene.refGene) 
+
+#Filter for variants in epigenetic genes
+patient_epi <- filter(PatientFiltCombined, Gene.refGene %in% EpiVar)
+write.csv(patient_epi, 'patient_epi.csv')

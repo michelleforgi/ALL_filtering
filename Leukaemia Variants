@@ -1,0 +1,19 @@
+####Filter for leukaemia-associated variants
+
+#Import filtered data file (see file "Initial Filtering")
+PatientFilt <- read_csv("PatientCombined.csv",
+                                col_names = TRUE,
+                                na = "NaN")
+
+#Specify list of genes to search for
+#LIST TAKEN FROM CHANG ET AL. 2021
+LeukVar <- list("NOTCH1", "NOTCH2", "STIL", "FBXW7", "PHF6", "MTOR", "PTEN", "JAK3", "FLT3", "JAK1", "JAK2", "IL7R", "CBL", "NRAS", 
+             "KRAS", "NF1", "BRAF", "PTPN11", "TP53", "RUNX1", "BCL11B", "CNOT3", "GATA3", "GATA2", "DNM2", "ETV6",
+             "RB1", "LEF1", "BCOR", "WT1", "IKZF1", "CSF1R", "SH2B3", "CRLF2", "CDKN2A", "CDKN2B", "ERG", "EBF1", "PAX5",
+             "PAR1", "CSFRA", "BTG", "IDH1", "IDH2", "LMO1", "LMO2", "EPOR", "ABL1", "ABL2")
+
+str(LeukVar)
+
+#Filter for variants in genes of interest
+patient_leuk <- filter(PatientFilt, Gene.refGene %in% LeukVar)
+write.csv(patient_leuk, 'patient_leuk.csv')

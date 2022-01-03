@@ -1,0 +1,69 @@
+
+install.packages("tidyverse", dependencies=TRUE)
+install.packages ("readxl")
+install.packages ("ggplot2")
+install.packages("readr")
+install.packages("Hmisc")
+install.packages("gsubfn")
+install.packages ("dplyr")
+
+library(gsubfn)
+library(tidyverse)
+library(readxl)
+library(ggplot2)
+library(readr)
+library(Hmisc)
+library(dplyr)
+
+
+#load KMT2A patient mRNAseq variant files, and add a column that specifies subtype of patient
+
+
+Patient_1 <- read_excel("mRNA-seq/KMT2Ar-mRNAseq/Patient_1.xlsx", 
+                      sheet = "Patient_1_Variants",
+                      col_names = TRUE,
+                      na = "NaN")
+Patient_1 <- cbind(Patient_1, ID='Patient_1', Subtype = 'KMT2Ar-B')
+
+Patient_2 <- read_excel("mRNA-seq/KMT2Ar-mRNAseq/Patient_2.xlsx", 
+                      sheet = "Patient_2_Variants",
+                      col_names = TRUE,
+                      na = "NaN")
+Patient_2 <- cbind(Patient_2, ID='Patient_2', Subtype = 'KMT2Ar-B')
+
+
+#Combine into one data frame
+KMT2Ar <- rbind(Patient_1, Patient_2)
+
+#Filter 1 - Retain exonic variants & nonsynonymous SNVs only
+KMT2Ar <- KMT2Ar %>% filter(Func.knownGene == "exonic" & ExonicFunc.refGene == "nonsynonymous SNV")
+
+#Convert NA values to 0 only for ExAC_ALL row 
+#Because a value of NA in ExAC database means that the variant has never been detected as a SNP, and these variants should be retained for analysis
+KMT2Ar[["ExAC_ALL"]][is.na(KMT2Ar[["ExAC_ALL"]])] <- 0
+
+#Filter 3 - ExAC_ALL <10% (including 0, meaning variant is not in ExAC_ALL database)
+##ExAC_ALL of >5% implies that variant is a common SNP (note that these may still be important variants!)
+KMT2Ar <- KMT2Ar %>% filter(ExAC_ALL <= 0.05 | ExAC_ALL == "NA")
+
+#Add column Reads_SUM
+##Convert Reads_ALT from chr to num 
+KMT2Ar <- transform(KMT2Ar, Reads_ALT = as.numeric(Reads_ALT))
+##Sum Reads_REF and Reads_ALT
+KMT2Ar$Reads_SUM <- KMT2Ar$Reads_ALT + KMT2Ar$Reads_REF
+
+# Filter 4 - Variant must have >20 reads total 
+KMT2Ar <- KMT2Ar %>% filter(Reads_SUM > 20)
+
+#Filter 5 - Deleterious variants - deleterious in either caller
+#Convert to integers
+KMT2Ar <-  filter(KMT2Ar, SIFT_pred == "D" | Polyphen2_HVAR_pred == "D")
+
+
+##Repeat for BCR-ABL1 and MLLT10r cohorts
+
+# Combine BCR-ABL and KMT2A and MLLT10r
+PatientCombined <- rbind(KMT2Ar, BCRABL, MLLT10r)
+
+#Use following code if you want to export filtered variant list to excel - I load this into a separate R file to further filter variants
+write.csv(PatientCombined, "PatientCombined.csv")
